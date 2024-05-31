@@ -8,8 +8,7 @@
 Está disponível uma collction do postman para efetuar consultas nos endpoints da aplicação:
 
 #  Link para a collection do Postman:
-[TO-DO LIST.postman_collection.json](..%2F..%2FDesktop%2FTO-DO%20LIST.postman_collection.json)
-
+[TO-DO LIST.postman_collection2.json](..%2F..%2FDesktop%2FTO-DO%20LIST.postman_collection2.json)
 OBS: Efetuar o import desse arquivo no postman!
 
 # 1 - Utilizar um serviço

@@ -8,6 +8,6 @@ import com.mvp.todolist.entities.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-	public Optional<User> findByEmail(String login);
+	Optional<User> findByEmail(String login);
 
 }

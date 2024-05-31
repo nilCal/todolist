@@ -2,12 +2,10 @@ package com.mvp.todolist.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.mvp.todolist.dto.TaskDTO;
@@ -17,7 +15,7 @@ import com.mvp.todolist.repository.TaskRepository;
 @Service
 public class TaskService {
 
-	private TaskRepository taskRepository;
+	private final TaskRepository taskRepository;
 	private final ModelMapper modelMapper;
 	
 	public TaskService(TaskRepository taskRepository, ModelMapper modelMapper) {
@@ -36,7 +34,7 @@ public class TaskService {
 	}
 
 	public Optional<List<Task>> findAllTasks() {
-		List<Task> tasks = new ArrayList<Task>();
+		List<Task> tasks = new ArrayList<>();
 		taskRepository.findAll().forEach(tasks::add);
 		return Optional.of(tasks);
 	}
@@ -46,17 +44,12 @@ public class TaskService {
 		 return modelMapper.map(task,TaskDTO.class);
 	}
 
-	public Optional<Task> update(Long id, Task task) {
-		Optional<Task> taskToUpdate = taskRepository.findById(id);
-		taskToUpdate.ifPresent(taskWithNewValues -> {
-			taskWithNewValues.setTitle(task.getTitle());
-			taskWithNewValues.setDescription(task.getDescription());
-			taskWithNewValues.setCreationDate(taskToUpdate.get().getCreationDate());
-			taskWithNewValues.setUpdateDate(LocalDateTime.now());
-			taskWithNewValues.setUserCode(task.getUserCode());
-			taskWithNewValues.setStatus(task.getStatus());
-			taskRepository.save(taskWithNewValues);
-		});
+	public Optional<Task> update(Task task, Optional<Task> taskToUpdate) {
+		taskToUpdate.get().setTitle(task.getTitle());
+		taskToUpdate.get().setDescription(task.getDescription());
+		taskToUpdate.get().setUpdateDate(LocalDateTime.now());
+		taskToUpdate.get().setStatus(task.getStatus());
+		taskRepository.save(taskToUpdate.get());
 		return Optional.of(taskToUpdate.orElse(null));
 	}
 

@@ -7,10 +7,11 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
+import com.mvp.todolist.entities.User;
+import com.mvp.todolist.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.ModelMap;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,49 +34,77 @@ import com.mvp.todolist.service.TaskService;
 public class TaskController {
 
 	private final TaskService taskService;
+	private final UserService userService;
 	private final ModelMapper modelMapper;
 
-	public TaskController(TaskService taskService, ModelMapper modelMapper) {
+	public TaskController(TaskService taskService, UserService userService, ModelMapper modelMapper) {
 		this.taskService = taskService;
 		this.modelMapper = modelMapper;
+		this.userService = userService;
 	}
 
 	@PostMapping(value = "/create")
 	public ResponseEntity<Task> create(@RequestBody @Valid TaskDTO taskDto) {
-		Task task = modelMapper.map(taskDto, Task.class);
-		Task createdTask = taskService.createTask(task);
-		return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+		try {
+			Optional<User> user = userService.findById(taskDto.getUserCode());
+			Task task = modelMapper.map(taskDto, Task.class);
+			if (user.isPresent()) {
+				task.setUser(user.orElse(null));
+				Task createdTask = taskService.createTask(task);
+				return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+			}
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+		}
 	}
 
 	@GetMapping(value = "/findById/{id}")
 	public ResponseEntity<Optional<Task>> findTaskById(@PathVariable Long id) {
 		Optional<Task> task = taskService.findTaskById(id);
-		return ResponseEntity.status(HttpStatus.OK).body(task);
+		if(task.isPresent()) {
+			return ResponseEntity.status(HttpStatus.OK).body(task);
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
 	@GetMapping(value = "/findAll")
 	public ResponseEntity<Optional<List<Task>>> findAllTasks() {
 		Optional<List<Task>> allTasks = taskService.findAllTasks();
-		return ResponseEntity.status(HttpStatus.OK).body(allTasks);
+		if(allTasks.isPresent()) {
+			return ResponseEntity.status(HttpStatus.OK).body(allTasks);
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
 	@GetMapping(value = "/details/{id}")
 	public ResponseEntity<TaskDTO> findTaskDetailsById(@PathVariable Long id) {
 		TaskDTO task = taskService.findTaskDetailsById(id);
-		return ResponseEntity.status(HttpStatus.OK).body(task);
+		if (task != null) {
+			return ResponseEntity.status(HttpStatus.OK).body(task);
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
 	@PutMapping(value = "/update/{id}")
 	public ResponseEntity<Optional<Task>> updateTask(@PathVariable Long id, @Valid @RequestBody TaskDTO taskDto) {
-		Task task = modelMapper.map(taskDto, Task.class);
-		Optional<Task> taskUpdated = taskService.update(id, task);
-		return ResponseEntity.status(HttpStatus.OK).body(taskUpdated);
+		Optional<Task> taskToUpdate = taskService.findTaskById(id);
+		if(taskToUpdate.isPresent()) {
+			Task task = modelMapper.map(taskDto, Task.class);
+			Optional<Task> taskUpdated = taskService.update(task, taskToUpdate);
+			return ResponseEntity.status(HttpStatus.OK).body(taskUpdated);
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
 	@DeleteMapping(value = "/delete/{id}")
 	public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-		taskService.delete(id);
-		return ResponseEntity.noContent().build();
+		Optional<Task> taskToDelete = taskService.findTaskById(id);
+		if(taskToDelete.isPresent()) {
+			taskService.delete(id);
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 	
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
