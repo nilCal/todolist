@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
-import com.mvp.todolist.entities.User;
 import com.mvp.todolist.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -44,20 +43,14 @@ public class TaskController {
 	}
 
 	@PostMapping(value = "/create")
-	public ResponseEntity<Task> create(@RequestBody @Valid TaskDTO taskDto) {
-		try {
-			Optional<User> user = userService.findById(taskDto.getUserCode());
-			Task task = modelMapper.map(taskDto, Task.class);
-			if (user.isPresent()) {
-				task.setUser(user.orElse(null));
-				Task createdTask = taskService.createTask(task);
-				return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
-			}
+	public ResponseEntity<Task> create(@RequestBody @Valid TaskDTO taskDTO) {
+		Task createdTask = taskService.createTask(taskDTO);
+		if (createdTask != null) {
+			return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+		} else
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-		}
 	}
+
 
 	@GetMapping(value = "/findById/{id}")
 	public ResponseEntity<Optional<Task>> findTaskById(@PathVariable Long id) {
@@ -87,11 +80,9 @@ public class TaskController {
 	}
 
 	@PutMapping(value = "/update/{id}")
-	public ResponseEntity<Optional<Task>> updateTask(@PathVariable Long id, @Valid @RequestBody TaskDTO taskDto) {
-		Optional<Task> taskToUpdate = taskService.findTaskById(id);
-		if(taskToUpdate.isPresent()) {
-			Task task = modelMapper.map(taskDto, Task.class);
-			Optional<Task> taskUpdated = taskService.update(task, taskToUpdate);
+	public ResponseEntity<Optional<Task>> updateTask(@PathVariable Long id, @Valid @RequestBody TaskDTO taskDTO) {
+		Optional<Task> taskUpdated = taskService.update(id, taskDTO);
+		if(taskUpdated.isPresent()) {
 			return ResponseEntity.status(HttpStatus.OK).body(taskUpdated);
 		}
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -99,9 +90,8 @@ public class TaskController {
 
 	@DeleteMapping(value = "/delete/{id}")
 	public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-		Optional<Task> taskToDelete = taskService.findTaskById(id);
-		if(taskToDelete.isPresent()) {
-			taskService.delete(id);
+		boolean response = taskService.delete(id);
+		if (response) {
 			return ResponseEntity.noContent().build();
 		}
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

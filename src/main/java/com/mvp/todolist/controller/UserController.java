@@ -3,10 +3,8 @@ package com.mvp.todolist.controller;
 import com.mvp.todolist.dto.UserDTO;
 import com.mvp.todolist.entities.User;
 import com.mvp.todolist.service.UserService;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -20,20 +18,14 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
-    private final ModelMapper modelMapper;
 
-    public UserController(UserService userService, PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
-        this.passwordEncoder = passwordEncoder;
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.modelMapper = modelMapper;
     }
 
     @PostMapping("/create")
     public ResponseEntity<User> create(@RequestBody @Valid UserDTO userDTO) {
-        User user = modelMapper.map(userDTO, User.class);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return ResponseEntity.ok(userService.createUser(user));
+        return ResponseEntity.ok(userService.createUser(userDTO));
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
